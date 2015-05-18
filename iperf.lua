@@ -1,6 +1,7 @@
+-- REFERENCE
 -- http://www.ainoniwa.net/ssp/wp-content/uploads/2013/06/wireshark_dissector_with_lua.pdf
 -- http://ufpr.dl.sourceforge.net/project/iperf/iperf-2.0.5.tar.gz
--- include/Settings.hpp between 300 and 341
+
 iperf_proto = Proto("iperf","Iperf UDP packet")
 iperf_seq_F = ProtoField.uint32("iperf.id", "Iperf sequence")
 iperf_sec_F = ProtoField.uint32("iperf.sec", "Iperf sec")
@@ -11,11 +12,10 @@ iperf_mport_F = ProtoField.uint32("iperf.mPort", "Iperf mPort")
 iperf_bufferlen_F = ProtoField.uint32("iperf.bufferlen", "Iperf bufferlen")
 iperf_mwinband_F = ProtoField.uint32("iperf.mWinBand", "Iperf mWinBand",base.HEX)
 iperf_mamount_F = ProtoField.uint32("iperf.mAmount", "Iperf mAmount",base.HEX)
---iperf_proto.fields = {iperf_seq_F, iperf_sec_F, iperf_usec_F }
 iperf_proto.fields = {iperf_seq_F, iperf_sec_F, iperf_usec_F, iperf_flags_F, iperf_numthreads_F, iperf_mport_F, iperf_bufferlen_F, iperf_mwinband_F, iperf_mamount_F }
 
 function iperf_proto.dissector(buffer,pinfo,tree)
---info para disectar
+ 
  local iperf_seq_range = buffer(0,4)
  local iperf_sec_range = buffer(4,4)
  local iperf_usec_range = buffer(8,4)
@@ -26,7 +26,6 @@ function iperf_proto.dissector(buffer,pinfo,tree)
  local iperf_mwinband_range = buffer(28,4)
  local iperf_mamount_range = buffer(32,4)
 
---info para seleccionar en el frame
  local iperf_seq = iperf_seq_range:uint()
  local iperf_sec = iperf_sec_range:uint()
  local iperf_usec = iperf_usec_range:uint()
@@ -48,13 +47,6 @@ function iperf_proto.dissector(buffer,pinfo,tree)
  subtree:add(iperf_mwinband_F, iperf_mwinband_range, iperf_mwinband)
  subtree:add(iperf_mamount_F, iperf_mamount_range, iperf_mamount)
 
-
-
---subtree:add(buffer(0,2),"The first two bytes: " .. buffer(0,2):uint())
---subtree:add(buffer(2,1),"The 3rd byte: " .. buffer(2,1):uint())
---subtree:add(buffer(3,1),"The 4th byte: " .. buffer(3,1):uint())
-
---Dissector.get("data"):call(buffer(12,buffer:len()-12):tvb(), pinfo, tree)
 Dissector.get("data"):call(buffer(36,buffer:len()-36):tvb(), pinfo, tree)
 end
 DissectorTable.get("udp.port"):add(5001, iperf_proto)
