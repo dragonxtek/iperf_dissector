@@ -4,6 +4,7 @@
 
 iperf_proto = Proto("iperf","Iperf UDP packet")
 iperf_seq_F = ProtoField.uint32("iperf.id", "Iperf sequence")
+iperf_time_F = ProtoField.string("iperf.ts", "Iperf TimeStamp")
 iperf_sec_F = ProtoField.uint32("iperf.sec", "Iperf sec")
 iperf_usec_F = ProtoField.uint32("iperf.usec", "Iperf usec")
 iperf_flags_F = ProtoField.uint32("iperf.flags", "Iperf flags")
@@ -12,14 +13,15 @@ iperf_mport_F = ProtoField.uint32("iperf.mPort", "Iperf mPort")
 iperf_bufferlen_F = ProtoField.uint32("iperf.bufferlen", "Iperf bufferlen")
 iperf_mwinband_F = ProtoField.uint32("iperf.mWinBand", "Iperf mWinBand",base.HEX)
 iperf_mamount_F = ProtoField.uint32("iperf.mAmount", "Iperf mAmount",base.HEX)
-iperf_proto.fields = {iperf_seq_F, iperf_sec_F, iperf_usec_F, iperf_flags_F, iperf_numthreads_F, iperf_mport_F, iperf_bufferlen_F, iperf_mwinband_F, iperf_mamount_F }
+iperf_proto.fields = {iperf_seq_F, iperf_time_F, iperf_sec_F, iperf_usec_F, iperf_flags_F, iperf_numthreads_F, iperf_mport_F, iperf_bufferlen_F, iperf_mwinband_F, iperf_mamount_F }
 
 function iperf_proto.dissector(buffer,pinfo,tree)
- 
+
  local iperf_seq_range = buffer(0,4)
+ local iperf_time_range = buffer(4,8)
  local iperf_sec_range = buffer(4,4)
  local iperf_usec_range = buffer(8,4)
- local iperf_flags_range = buffer(12,4) 
+ local iperf_flags_range = buffer(12,4)
  local iperf_numthreads_range = buffer(16,4)
  local iperf_mport_range = buffer(20,4)
  local iperf_bufferlen_range = buffer(24,4)
@@ -31,15 +33,20 @@ function iperf_proto.dissector(buffer,pinfo,tree)
  local iperf_usec = iperf_usec_range:uint()
  local iperf_flags = iperf_flags_range:uint()
  local iperf_numthreads = iperf_numthreads_range:uint()
- local iperf_mport = iperf_mport_range:uint() 
+ local iperf_mport = iperf_mport_range:uint()
  local iperf_bufferlen = iperf_bufferlen_range:uint()
  local iperf_mwinband = iperf_mwinband_range:uint()
  local iperf_mamount = iperf_mamount_range:uint()
 
+ -- Work out the timestamp from the sec and usec
+ local timestamp = (iperf_sec * 1.0) + (iperf_usec / 1000000.0)
+ local iperf_time = format_date(timestamp)
+
  local subtree = tree:add(iperf_proto, buffer(0,36), "Iperf packet data")
  subtree:add(iperf_seq_F, iperf_seq_range, iperf_seq)
- subtree:add(iperf_sec_F, iperf_sec_range, iperf_sec)
- subtree:add(iperf_usec_F, iperf_usec_range, iperf_usec)
+ timetree = subtree:add(iperf_time_F, iperf_time_range, iperf_time)
+ timetree:add(iperf_sec_F, iperf_sec_range, iperf_sec)
+ timetree:add(iperf_usec_F, iperf_usec_range, iperf_usec)
  subtree:add(iperf_flags_F, iperf_flags_range, iperf_flags)
  subtree:add(iperf_numthreads_F, iperf_numthreads_range, iperf_numthreads)
  subtree:add(iperf_mport_F, iperf_mport_range, iperf_mport)
